@@ -15,6 +15,17 @@ jobs:
       - name: Checkout the files
         uses: actions/checkout@v2
 
+      - name: Deploy CloudFormation stack
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: my-ec2-stack
+          template: cloudformation-template.yml
+          capabilities: CAPABILITY_IAM
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: "us-west-2"  # Replace with your preferred AWS region
+
       - name: Build the Docker image
         run: docker build -t contact-page .
 
@@ -34,8 +45,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             sudo apt-get -y update
-            sudo apt-get install -y apache2
-            sudo systemctl start apache2
-            sudo systemctl enable apache2
+            sudo apt-get install -y docker
+            sudo systemctl start docker
+            sudo systemctl enable docker
             cd home
             sudo mv * /var/www/html
+            docker pull your-username/contact-page:latest
+            docker stop contact-page || true
+            docker rm contact-page || true
+            docker run -d -p 80:80 --name contact-page your-username/contact-page:latest
