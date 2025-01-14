@@ -21,7 +21,8 @@ jobs:
             --count 1 \
             --instance-type t2.micro \
             --key-name AWS_CICD \
-            --security-group-ids sg-008063e9abee4c57e
+            --security-group-ids sg-008063e9abee4c57e \
+            --metadata-options "HttpTokens=required"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
