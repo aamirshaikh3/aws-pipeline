@@ -23,11 +23,11 @@ jobs:
       - name: Create EC2 Instance
         run: |
           aws ec2 run-instances \
-            --image-id ami-0c55b159cbfafe1f0 \  # Replace with a suitable AMI ID for your region
+            --image-id ami-005fc0f236362e99f \  # Replace with a suitable AMI ID for your region
             --count 1 \
             --instance-type t2.micro \
-            --key-name my-key-pair \  # Replace with your key pair name
-            --security-groups default
+            --key-name AWS_CICD \  # Replace with your key pair name
+            --security-groups sg-008063e9abee4c57e
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
