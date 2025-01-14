@@ -17,7 +17,7 @@ jobs:
       - name: Create EC2 Instance
         run: |
           aws ec2 run-instances \
-            --image-id ami-005fc0f236362e99f \
+            --image-id ami-0e472ba40eb589f49 \
             --count 1 \
             --instance-type t2.micro \
             --key-name AWS_CICD \
