@@ -14,12 +14,6 @@ jobs:
       - name: Checkout the files
         uses: actions/checkout@v2
 
-      - name: Build the Docker image
-        run: docker build -t ghcr.io/aamirshaikh3/aws-pipeline:aamir .
-
-      - name: Push the Docker image to GitHub Container Registry
-        run: docker push ghcr.io/aamirshaikh3/aws-pipeline:aamir
-
       - name: Create EC2 Instance
         run: |
           aws ec2 run-instances \
@@ -54,7 +48,7 @@ jobs:
             sudo systemctl enable docker
             cd /home
             sudo mv * /var/www/html
-            docker pull ghcr.io/aamirshaikh3/aws-pipeline:aamir
+            docker build -t my-nginx-image .
             docker stop contact-page || true
             docker rm contact-page || true
-            docker run -d -p 80:80 --name contact-page ghcr.io/aamirshaikh3/aws-pipeline:aamir
+            docker run -d -p 80:80 --name contact-page my-nginx-image
