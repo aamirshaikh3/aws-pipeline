@@ -17,15 +17,15 @@ jobs:
       - name: Create EC2 Instance
         run: |
           aws ec2 run-instances \
-            --image-id ami-005fc0f236362e99f \  # Replace with a suitable AMI ID for your region
+            --image-id ami-005fc0f236362e99f \
             --count 1 \
             --instance-type t2.micro \
-            --key-name AWS_CICD \  # Replace with your key pair name
-            --security-groups sg-008063e9abee4c57e
+            --key-name AWS_CICD \
+            --security-group-ids sg-008063e9abee4c57e
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: "us-east-1"  # Replace with your preferred AWS region
+          AWS_REGION: "us-west-2"
 
       - name: Deploy to Server 1
         uses: easingthemes/ssh-deploy@main
