@@ -8,7 +8,7 @@ on:
 
 jobs:
   deploy:
-    name: Deploy to EC2 on master branch push
+    name: Deploy to EC2 on main branch push
     runs-on: ubuntu-latest
 
     steps:
@@ -26,8 +26,18 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: "us-west-2"  # Replace with your preferred AWS region
 
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build the Docker image
-        run: docker build -t contact-page .
+        run: docker build -t ghcr.io/aamirshaikhbk/aws-cicd:aamir .
+
+      - name: Push the Docker image to GitHub Container Registry
+        run: docker push ghcr.io/aamirshaikhbk/aws-cicd:aamir
 
       - name: Deploy to Server 1
         uses: easingthemes/ssh-deploy@main
@@ -48,9 +58,9 @@ jobs:
             sudo apt-get install -y docker
             sudo systemctl start docker
             sudo systemctl enable docker
-            cd home
+            cd /home
             sudo mv * /var/www/html
-            docker pull your-username/contact-page:latest
+            docker pull ghcr.io/aamirshaikhbk/aws-cicd:aamir
             docker stop contact-page || true
             docker rm contact-page || true
-            docker run -d -p 80:80 --name contact-page your-username/contact-page:latest
+            docker run -d -p 80:80 --name contact-page ghcr.io/aamirshaikhbk/aws-cicd:aamir
