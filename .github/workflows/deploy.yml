@@ -41,9 +41,7 @@ jobs:
     - name: Run Docker commands on EC2
       run: |
           ssh -t -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST_DNS }} << 'EOF'
-            # Clone the GitHub repository
-            git clone https://github.com/aamirshaikh3/aws-pipeline.git
-            cd aws-pipeline
+            cd /var/www/html/aws-pipeline
             # Create a Dockerfile
             cat > Dockerfile << 'DOCKERFILE'
             FROM nginx:alpine
