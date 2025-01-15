@@ -31,7 +31,7 @@ jobs:
       - name: Set up SSH key for EC2 access
         uses: webfactory/ssh-agent@v0.5.3
         with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+          ssh-private-key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
 
       - name: Deploy to Server 1
         uses: easingthemes/ssh-deploy@main
@@ -41,25 +41,24 @@ jobs:
           REMOTE_USER: ${{ secrets.USERNAME }}
           TARGET: ${{ secrets.TARGET_DIR }}
 
-      - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo apt update
-            sudo apt install nginx
-            sudo apt-get -y update
-            sudo apt-get install -y docker
-            sudo systemctl start docker
-            sudo systemctl enable docker
-            cd /home
-            sudo mv * /var/www/html
-            docker build -t my-nginx-image .
-            docker stop contact-page || true
-            docker rm contact-page || true
-            docker run -d -p 80:80 --name contact-page my-nginx-image
+      - name: Install Docker
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          sudo apt-get update
+          sudo apt-get install -y docker-ce
+          sudo systemctl start docker
+          sudo systemctl enable docker
+
+      - name: Create target directory
+        run: |
+          sudo mkdir -p /var/www/html
+
+      - name: Move files to target directory
+        run: |
+          sudo mv * /var/www/html
 
       - name: Run Docker commands on EC2
         run: |
