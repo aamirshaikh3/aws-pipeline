@@ -1,24 +1,24 @@
 name: Deploy Docker to EC2
- 
+
 on:
   push:
     branches:
       - main
   workflow_dispatch:  # This allows manual triggering of the workflow
- 
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
- 
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
- 
+
     - name: Set up SSH key for EC2 access
       uses: webfactory/ssh-agent@v0.5.3
       with:
         ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
- 
+
     - name: Install Docker
       run: |
           sudo apt-get update
@@ -29,15 +29,15 @@ jobs:
           sudo apt-get install -y docker-ce
           sudo systemctl start docker
           sudo systemctl enable docker
- 
+
     - name: Create target directory
       run: |
           sudo mkdir -p /var/www/html
- 
+
     - name: Move files to target directory
       run: |
           sudo mv * /var/www/html
- 
+
     - name: Run Docker commands on EC2
       run: |
           ssh -t -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST_DNS }} << 'EOF'
@@ -48,6 +48,7 @@ jobs:
             cat > Dockerfile << 'DOCKERFILE'
             FROM nginx:latest
             COPY contact.html /usr/share/nginx/html
+            EXPOSE 80
             DOCKERFILE
             # Build the Docker image
             docker build -t my-nginx-image .
