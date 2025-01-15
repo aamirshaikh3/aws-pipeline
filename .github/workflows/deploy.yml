@@ -28,7 +28,7 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-    - name: Run Docker commands on EC2
+    - name: Install Docker and pull image on EC2
       run: |
         ssh -t -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST_DNS }} << 'EOF'
           # Update and install necessary packages
@@ -50,12 +50,12 @@ jobs:
           newgrp docker
 
           # Pull the Docker image from Docker Hub
-          docker pull your-dockerhub-username/my-nginx-image:latest
+          docker pull aamirshaikhbk/my-nginx-image:latest
 
           # Stop and remove the existing container (if any)
           docker stop my-container || true
           docker rm my-container || true
 
           # Run the Docker container
-          docker run -d -p 80:80 --name my-container your-dockerhub-username/my-nginx-image:latest
+          docker run -d -p 80:80 --name my-container aamirshaikhbk/my-nginx-image:latest
         EOF
