@@ -47,7 +47,7 @@ jobs:
           cd aws-pipeline            # Create a Dockerfile
           cat > Dockerfile << 'DOCKERFILE'
           FROM nginx:alpine
-          COPY /home/ubuntu/aws-pipeline/contact.html ./contact.html  # Ensure contact.html is in the right location
+          COPY /home/ec2-user/aws-pipeline/contact.html ./contact.html  # Ensure contact.html is in the right location
           EXPOSE 80
           DOCKERFILE
           # Build the Docker image
