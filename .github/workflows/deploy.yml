@@ -1,74 +1,59 @@
-name: Push-to-EC2
-
+name: Deploy Docker to EC2
+ 
 on:
   push:
     branches:
       - main
-
+  workflow_dispatch:  # This allows manual triggering of the workflow
+ 
 jobs:
   deploy:
-    name: Deploy to EC2 on main branch push
     runs-on: ubuntu-latest
-
+ 
     steps:
-      - name: Checkout the files
-        uses: actions/checkout@v3
-
-      # - name: Create EC2 Instance
-      #   run: |
-      #     aws ec2 run-instances \
-      #       --image-id ami-005fc0f236362e99f \
-      #       --count 1 \
-      #       --instance-type t2.micro \
-      #       --key-name AWS_CICD \
-      #       --security-group-ids sg-008063e9abee4c57e \
-      #       --metadata-options "HttpTokens=required"
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_REGION: "us-east-1"
-
-      - name: Set up SSH key for EC2 access
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Deploy to Server 1
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.HOST_DNS }}
-          REMOTE_USER: ${{ secrets.USERNAME }}
-          TARGET: ${{ secrets.TARGET_DIR }}
-
-      - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            sudo apt update
-            sudo apt install nginx
-            sudo apt-get -y update
-            sudo apt-get install -y docker
-            sudo systemctl start docker
-            sudo systemctl enable docker
-            cd /home
-            sudo mv * /var/www/html
+    - name: Checkout repository
+      uses: actions/checkout@v3
+ 
+    - name: Set up SSH key for EC2 access
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+ 
+    - name: Install Docker
+      run: |
+          sudo apt-get update
+          sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+          sudo apt-get update
+          sudo apt-get install -y docker-ce
+          sudo systemctl start docker
+          sudo systemctl enable docker
+ 
+    - name: Create target directory
+      run: |
+          sudo mkdir -p /var/www/html
+ 
+    - name: Move files to target directory
+      run: |
+          sudo mv * /var/www/html
+ 
+    - name: Run Docker commands on EC2
+      run: |
+          ssh -t -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
+            # Clone the GitHub repository
+            git clone https://github.com/aamirshaikh3/aws-pipeline.git
+            cd aws-pipeline
+            # Create a Dockerfile
+            cat > Dockerfile << 'DOCKERFILE'
+            FROM nginx:latest
+            COPY contact.html /usr/share/nginx/html
+            DOCKERFILE
+            # Build the Docker image
             docker build -t my-nginx-image .
-            docker stop contact-page || true
-            docker rm contact-page || true
-            docker run -d -p 80:80 --name contact-page my-nginx-image
-
-      - name: Run Docker commands on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-            # Pull the Docker image from Docker Hub (or any other registry)
-            docker pull my-docker-image:latest
             # Stop and remove the existing container (if any)
             docker stop my-container || true
             docker rm my-container || true
             # Run the Docker container
-            docker run -d --name my-container my-docker-image:latest
+            docker run -d -p 80:80 --name my-container my-nginx-image
           EOF
