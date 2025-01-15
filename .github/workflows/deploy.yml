@@ -46,8 +46,10 @@ jobs:
             cd aws-pipeline
             # Create a Dockerfile
             cat > Dockerfile << 'DOCKERFILE'
-            FROM nginx:latest
-            COPY contact.html /usr/share/nginx/html
+            FROM nginx:alpine
+            WORKDIR /aws-pipeline
+            COPY . .
+            RUN cp contact.html /usr/share/nginx/html/
             EXPOSE 80
             DOCKERFILE
             # Build the Docker image
