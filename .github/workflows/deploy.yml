@@ -14,20 +14,6 @@ jobs:
       - name: Checkout the files
         uses: actions/checkout@v3
 
-      # - name: Create EC2 Instance
-      #   run: |
-      #     aws ec2 run-instances \
-      #       --image-id ami-005fc0f236362e99f \
-      #       --count 1 \
-      #       --instance-type t2.micro \
-      #       --key-name AWS_CICD \
-      #       --security-group-ids sg-008063e9abee4c57e \
-      #       --metadata-options "HttpTokens=required"
-      #   env:
-      #     AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     AWS_REGION: "us-east-1"
-
       - name: Set up SSH key for EC2 access
         uses: webfactory/ssh-agent@v0.5.3
         with:
@@ -63,11 +49,17 @@ jobs:
       - name: Run Docker commands on EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.EC2_HOST }} << 'EOF'
-            # Pull the Docker image from Docker Hub (or any other registry)
-            docker pull my-docker-image:latest
+            # Clone the GitHub repository
+            git clone https://github.com/aamirshaikh3/aws-pipeline.git
+            cd aws-pipeline
+            # Create a Dockerfile
+            echo 'FROM nginx:latest
+                  COPY contact.html /usr/share/nginx/html' > Dockerfile
+            # Build the Docker image
+            docker build -t my-nginx-image .
             # Stop and remove the existing container (if any)
             docker stop my-container || true
             docker rm my-container || true
             # Run the Docker container
-            docker run -d --name my-container my-docker-image:latest
+            docker run -d -p 80:80 --name my-container my-nginx-image
           EOF
