@@ -30,18 +30,10 @@ jobs:
           sudo systemctl start docker
           sudo systemctl enable docker
 
-    - name: Create target directory
-      run: |
-          sudo mkdir -p /var/www/html
-
-    - name: Move files to target directory
-      run: |
-          sudo mv * /var/www/html
-
     - name: Run Docker commands on EC2
       run: |
           ssh -t -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST_DNS }} << 'EOF'
-            cd /var/www/html/aws-pipeline
+            cd /home/ubuntu/aws-pipeline
             # Create a Dockerfile
             cat > Dockerfile << 'DOCKERFILE'
             FROM nginx:alpine
