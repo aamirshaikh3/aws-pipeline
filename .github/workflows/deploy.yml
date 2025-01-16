@@ -28,15 +28,18 @@ jobs:
           sudo apt-get install -y docker-ce
           sudo systemctl start docker
           sudo systemctl enable docker
+
           # Verify Docker installation
           docker --version
           sudo systemctl status docker
+
           # Add ubuntu user to docker group
           sudo usermod -aG docker ubuntu
-          newgrp docker  # Refresh group membership immediately
+
           # Ensure docker is working properly by listing images and containers
           sudo docker ps -a
           sudo docker images
+
           # Clone repository if not exists or update if exists
           if [ -d "aws-pipeline" ]; then
             cd aws-pipeline
@@ -46,18 +49,13 @@ jobs:
             git clone https://github.com/aamirshaikh3/aws-pipeline.git
             cd aws-pipeline
           fi
-         #  # Create Dockerfile_1
-         #  cat > Dockerfile_1 << 'EOL'
-         #  FROM nginx:alpine
-         #  COPY aws-pipeline/contact.html /usr/share/nginx/html/contact.html
-         #  EXPOSE 80
-         # EOL
- 
-         # Create Dockerfile_1 using printf to ensure correct line breaks
-         printf "FROM nginx:alpine\nCOPY aws-pipeline/contact.html /usr/share/nginx/html/contact.html\nEXPOSE 80\n" > Dockerfile_1
- 
+
+          # Create Dockerfile using printf to ensure correct line breaks
+          printf "FROM nginx:alpine\nCOPY contact.html /usr/share/nginx/html/contact.html\nEXPOSE 80\n" > Dockerfile
+
           # Build the Docker image
           sudo docker build -t my-nginx-image .
+          
           # Check if Docker build was successful
           if [ $? -eq 0 ]; then
             echo "Docker build successful."
@@ -65,10 +63,13 @@ jobs:
             echo "Docker build failed."
             exit 1
           fi
+
           # Stop and remove the existing container (if any)
           sudo docker ps -a -q -f name=my-container | grep -q . && sudo docker stop my-container && sudo docker rm my-container || echo "No existing container to stop/remove."
+
           # Run the Docker container
           sudo docker run -d -p 80:80 --name my-container my-nginx-image
+
           # Ensure the container is running
           sudo docker ps -a
           sudo docker logs my-container
