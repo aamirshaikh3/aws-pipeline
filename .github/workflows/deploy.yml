@@ -1,36 +1,24 @@
 name: Deploy Docker to EC2
-
+ 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:  # This allows manual triggering of the workflow
-
+ 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
+ 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v3
-
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKERHUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-    - name: Build and push Docker image
-      run: |
-        docker build -t aamirshaikhbk/my-nginx-image:latest .
-        docker tag aamirshaikhbk/my-nginx-image:latest aamirshaikhbk/my-nginx-image:latest
-        docker push aamirshaikhbk/my-nginx-image:latest
-
+ 
     - name: Set up SSH key for EC2 access
       uses: webfactory/ssh-agent@v0.5.3
       with:
         ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
-
-    - name: Install Docker and pull image on EC2
+ 
+    - name: Run Docker commands on EC2
       run: |
-        ssh -t -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST_DNS }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.HOST_DNS }} << 'EOF'
           # Update and install necessary packages
           sudo apt-get update
           sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
@@ -40,22 +28,48 @@ jobs:
           sudo apt-get install -y docker-ce
           sudo systemctl start docker
           sudo systemctl enable docker
-
           # Verify Docker installation
           docker --version
           sudo systemctl status docker
-
           # Add ubuntu user to docker group
           sudo usermod -aG docker ubuntu
-          newgrp docker
-
-          # Pull the Docker image from Docker Hub
-          docker pull aamirshaikhbk/my-nginx-image:latest
-
+          newgrp docker  # Refresh group membership immediately
+          # Ensure docker is working properly by listing images and containers
+          sudo docker ps -a
+          sudo docker images
+          # Clone repository if not exists or update if exists
+          if [ -d "aws-pipeline" ]; then
+            cd aws-pipeline
+            git reset --hard  # Discard any local changes
+            git pull  # Pull the latest changes
+          else
+            git clone https://github.com/aamirshaikh3/aws-pipeline.git
+            cd aws-pipeline
+          fi
+         #  # Create Dockerfile_1
+         #  cat > Dockerfile_1 << 'EOL'
+         #  FROM nginx:alpine
+         #  COPY aws-pipeline/contact.html /usr/share/nginx/html/contact.html
+         #  EXPOSE 80
+         # EOL
+ 
+         # Create Dockerfile_1 using printf to ensure correct line breaks
+         printf "FROM nginx:alpine\nCOPY aws-pipeline/contact.html /usr/share/nginx/html/contact.html\nEXPOSE 80\n" > Dockerfile_1
+ 
+          # Build the Docker image
+          sudo docker build -t my-nginx-image .
+          # Check if Docker build was successful
+          if [ $? -eq 0 ]; then
+            echo "Docker build successful."
+          else
+            echo "Docker build failed."
+            exit 1
+          fi
           # Stop and remove the existing container (if any)
-          docker stop my-container || true
-          docker rm my-container || true
-
+          sudo docker ps -a -q -f name=my-container | grep -q . && sudo docker stop my-container && sudo docker rm my-container || echo "No existing container to stop/remove."
           # Run the Docker container
-          docker run -d -p 80:80 --name my-container aamirshaikhbk/my-nginx-image:latest
+          sudo docker run -d -p 80:80 --name my-container my-nginx-image
+          # Ensure the container is running
+          sudo docker ps -a
+          sudo docker logs my-container
         EOF
