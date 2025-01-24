@@ -3,7 +3,7 @@
 This AWS-Git pipeline automates the continuous integration and continuous delivery (CI/CD) process for aws-pipeline. The pipeline is designed to streamline the development workflow by integrating AWS services with Git repositories.
 Author - Aamir
 Beyondkey
-Presentation of CICD
+Presentation of CI-CD
 
 **Instead of creating Image on ec2 we can use docker hub as well by changing some configuration**
 
